@@ -40,6 +40,7 @@ from homeassistant.const import (
     CONF_BELOW,
     CONF_CONDITION,
     CONF_CONTINUE_ON_TIMEOUT,
+    CONF_COUNT,
     CONF_DELAY,
     CONF_DEVICE_ID,
     CONF_DOMAIN,
@@ -60,8 +61,10 @@ from homeassistant.const import (
     CONF_TIMEOUT,
     CONF_UNIT_SYSTEM_IMPERIAL,
     CONF_UNIT_SYSTEM_METRIC,
+    CONF_UNTIL,
     CONF_VALUE_TEMPLATE,
     CONF_WAIT_TEMPLATE,
+    CONF_WHILE,
     ENTITY_MATCH_ALL,
     ENTITY_MATCH_NONE,
     SUN_EVENT_SUNRISE,
@@ -1009,12 +1012,23 @@ DEVICE_ACTION_SCHEMA = DEVICE_ACTION_BASE_SCHEMA.extend({}, extra=vol.ALLOW_EXTR
 
 _SCRIPT_SCENE_SCHEMA = vol.Schema({vol.Required(CONF_SCENE): entity_domain("scene")})
 
-_SCRIPT_REPEAT_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_ALIAS): string,
-        vol.Required(CONF_REPEAT): vol.Any(vol.Coerce(int), template),
-        vol.Required(CONF_SEQUENCE): SCRIPT_SCHEMA,
-    }
+_SCRIPT_REPEAT_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Optional(CONF_ALIAS): string,
+            vol.Required(CONF_REPEAT): {
+                vol.Exclusive(CONF_COUNT, "repeat"): vol.Any(vol.Coerce(int), template),
+                vol.Exclusive(CONF_WHILE, "repeat"): vol.All(
+                    ensure_list, [CONDITION_SCHEMA]
+                ),
+                vol.Exclusive(CONF_UNTIL, "repeat"): vol.All(
+                    ensure_list, [CONDITION_SCHEMA]
+                ),
+                vol.Required(CONF_SEQUENCE): SCRIPT_SCHEMA,
+            },
+        }
+    ),
+    has_at_least_one_key(CONF_COUNT, CONF_WHILE, CONF_UNTIL),
 )
 
 SCRIPT_ACTION_DELAY = "delay"
