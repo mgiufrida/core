@@ -15,6 +15,7 @@ from homeassistant.helpers import condition, config_per_platform
 from homeassistant.helpers.script import (
     SCRIPT_MODE_LEGACY,
     async_validate_action_config,
+    validate_legacy_mode_actions,
     warn_deprecated_legacy,
 )
 from homeassistant.loader import IntegrationNotFound
@@ -103,6 +104,14 @@ def _deprecated_legacy_mode(config):
     return config
 
 
+def _not_supported_in_legacy_mode(config):
+    for cfg in config[DOMAIN]:
+        if cfg[CONF_MODE] != SCRIPT_MODE_LEGACY:
+            continue
+        validate_legacy_mode_actions(cfg[CONF_ACTION])
+    return config
+
+
 async def async_validate_config(hass, config):
     """Validate config."""
     automations = list(
@@ -123,5 +132,6 @@ async def async_validate_config(hass, config):
     config[DOMAIN] = automations
 
     _deprecated_legacy_mode(config)
+    _not_supported_in_legacy_mode(config)
 
     return config

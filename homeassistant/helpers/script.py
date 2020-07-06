@@ -92,6 +92,10 @@ SCRIPT_BASE_SCHEMA = vol.Schema(
     }
 )
 
+_UNSUPPORTED_IN_LEGACY = {
+    cv.SCRIPT_ACTION_REPEAT: CONF_REPEAT,
+}
+
 
 def warn_deprecated_legacy(logger, msg):
     """Warn about deprecated legacy mode."""
@@ -103,6 +107,17 @@ def warn_deprecated_legacy(logger, msg):
         SCRIPT_MODE_LEGACY,
         msg,
     )
+
+
+def validate_legacy_mode_actions(sequence):
+    """Check for actions not supported in legacy mode."""
+    for action in sequence:
+        script_action = cv.determine_script_action(action)
+        if script_action in _UNSUPPORTED_IN_LEGACY:
+            raise vol.Invalid(
+                f"{_UNSUPPORTED_IN_LEGACY[script_action]} action not supported in "
+                f"{SCRIPT_MODE_LEGACY} mode"
+            )
 
 
 def validate_queue_size(config):
